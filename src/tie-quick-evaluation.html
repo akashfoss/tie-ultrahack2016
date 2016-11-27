@@ -625,7 +625,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _close: function() {
-        if (this.state == 2 ||  this.state == 0) {
+        if (this.state == 2 ||  this.state === 0) {
           // console.log("finished or not started, just close");
           this.fire("close-evaluation", true);
         } else if (this.state == 1) {
