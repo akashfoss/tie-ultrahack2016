@@ -1,0 +1,324 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/device-icons.html">
+<link rel="import" href="tie-quick-evaluation.html">
+<link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+
+
+
+
+
+
+
+
+<dom-module id="tie-inbox">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+      }
+
+      app-header {
+        background-color: var(--primary-blue);
+        position: relative;
+        z-index: 1;
+        white-space: nowrap;
+      }
+
+      app-header [main-title],
+      app-header paper-icon-button,
+      app-header iron-icon {
+        color: #fff;
+      }
+
+      app-header iron-icon {
+        padding: 8px;
+      }
+
+      #spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .main-content {
+        margin: 16px 22px;
+      }
+
+      .main-content h2 {
+        font-weight: 400;
+        margin-bottom: 0;
+        margin-top: 0.7em;
+      }
+
+      .main-content h2:first-child {
+        margin-top: 0;
+      }
+
+      .help-text {
+        display: block;
+        font-size: 14px;
+        opacity: 0.5;
+        line-height: 1.2;
+      }
+
+      .student-list {
+        display: flex;
+        flex-direction: column;
+        margin-top: 1em;
+      }
+
+      .student-list .btn {
+        font: inherit;
+        border: 0;
+        border-radius: 4px;
+        margin: 0 0 10px;
+        outline: none;
+        height: 44px;
+        background: transparent;
+        position: relative;
+        display: block;
+        transition: all 0.3s;
+      }
+
+      .student-list .btn::before {
+        display: block;
+        position: absolute;
+        content: "";
+        background: rgba(0,0,0,0.05);
+        border-radius: inherit;
+        width: 100%;
+        height: 100%;
+        transition: inherit;
+        pointer-events: none;
+      }
+
+      .student-list .btn span {
+        position: absolute;
+        transition: inherit;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+
+      .student-list .btn.activated {
+        height: 64px;
+        margin-bottom: -10px;
+      }
+
+      .student-list .btn.activated::before {
+        background-color: var(--primary-blue);
+        transform: scalex(1.2);
+      }
+
+      .student-list .btn.activated span {
+        color: #fff;
+        left: 56px;
+        transform: translate(0, -50%);
+        font-size: 20px;
+      }
+
+      tie-quick-evaluation {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        transition: opacity 300ms;
+      }
+
+      tie-quick-evaluation.inactive {
+        opacity: 0;
+        pointer-events: none;
+      },
+
+      .main-content > :not(.student-list) {
+        transition: opacity 200ms;
+      }
+
+      .main-content.hide > :not(.student-list) {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      [main-title] {
+        font-weight: 600;
+        font-size: 24px;
+        letter-spacing: 0.03em;
+      }
+    </style>
+
+    <app-location id="location" route="{{route}}"></app-location>
+
+    <firebase-document path="/users"
+                       data="{{userData}}">
+    </firebase-document>
+
+    <app-header id="header" fixed>
+      <app-toolbar>
+        <iron-icon icon="group-work"></iron-icon>
+        <div main-title>tie</div>
+        <paper-menu-button horizontal-align="right">
+          <paper-icon-button icon="more-vert" class="dropdown-trigger"></paper-icon-button>
+          <paper-menu class="dropdown-content">
+            <paper-item>Edit questions</paper-item>
+            <paper-item>Settings</paper-item>
+            <paper-item on-tap="_signOut">Sign out</paper-item>
+          </paper-menu>
+        </paper-menu-button>
+      </app-toolbar>
+    </app-header>
+
+    <paper-spinner id="spinner" active></paper-spinner>
+
+    <div class="main-content" id="main">
+      <template is="dom-if" if="{{user.students}}">
+        <h2>Notifications</h2>
+        <span class="help-text">Student self-evaluations which you haven’t reviewed yet</span>
+
+        <h2>In progress</h2>
+        <span class="help-text">Evaluations that are in progress</span>
+
+        <h2>Students</h2>
+        <span class="help-text">Start a new evaluation for a student</span>
+      </template>
+      <div class="student-list">
+        <template is="dom-repeat" items="{{user.students}}">
+          <div class="btn" on-tap="_quickEvaluate" user-id$="[[item.mpassid]]"><span>[[item.name.first]] [[item.name.last]]</span></div>
+        </template>
+      </div>
+    </div>
+
+    <tie-quick-evaluation user="{{user}}" student="{{student}}" id="evaluation" class="inactive" hidden></tie-quick-evaluation>
+
+    <paper-toast id="inprogresstoast" text="Evaluation has been moved to “In progress”"></paper-toast>
+
+  </template>
+
+  <script>
+    Polymer({
+      is: 'tie-inbox',
+
+      properties: {
+        user: {
+          type: Object,
+          notify: true
+        },
+        userData: {
+          type: Object,
+          observer: '_userDataChanged'
+        },
+        student: {
+          type: Object,
+          notify: true
+        }
+      },
+
+      ready: function() {
+        // if (this.user === undefined) {
+        //   this.$.location.set("route.path", "/");
+        // }
+      },
+
+      _signOut: function() {
+        // console.log(document.getElementById("auth"));
+        document.getElementById("auth").signOut()
+          .then(function(response) {
+            this.$.location.set("route.path", "/");
+            this.user = null;
+            this.userData = [];
+          }.bind(this))
+          .catch(function(error) {
+            console.error("Sign out failed", error);
+            alert("Sign out failed");
+          });
+      },
+
+      _userDataChanged: function(userData) {
+        // console.log("User data changed", userData);
+        if (Object.keys(userData).length > 0) {
+          this.$.spinner.active = false;
+
+          // Is this a teacher?
+          if (userData[this.user.mpassid].students) {
+            this.set("user.students", []);
+            this._loadStudents(userData[this.user.mpassid].students);
+          }
+        }
+      },
+
+      _loadStudents: function(students) {
+        students.forEach(function(studentId) {
+          var studentData = this.userData[studentId];
+          studentData.mpassid = studentId;
+          this.push("user.students", studentData);
+        }.bind(this));
+      },
+
+      __activeStudentButton: undefined,
+
+      _quickEvaluate: function(e) {
+        var studentId = e.target.getAttribute("user-id");
+
+        this.$.header.style.zIndex = "auto";
+        this.$.main.classList.add("hide");
+        this.$.evaluation.hidden = false;
+
+        // Button -> app-header animation
+        var targetButton = e.target;
+        var handle = function(e) {
+          if(!this.student) {
+            this.student = this.userData[studentId];
+            this.$.evaluation.classList.remove("inactive");
+            targetButton.removeEventListener("webkitTransitionEnd", handle);
+          }
+        }.bind(this);
+        targetButton.addEventListener("webkitTransitionEnd", handle);
+
+        e.target.classList.add("activated");
+        var offsety = "-" + e.target.offsetTop + "px";
+        var offsetx = "-" + e.target.offsetLeft + "px";
+        e.target.style.transform = "translate(" + offsetx + "," + offsety + ")";
+
+        this.__activeStudentButton = e.target;
+
+        this.addEventListener("close-evaluation", this._closeEvaluation);
+      },
+
+      _closeEvaluation: function(e) {
+        this.$.evaluation.classList.add("inactive");
+        this.__activeStudentButton.classList.remove("activated");
+        this.__activeStudentButton.style.transform = "";
+        this.$.header.style.zIndex = "";
+        this.$.main.classList.remove("hide");
+        this.student = null;
+
+        if(e.detail === false) {
+          this.$.inprogresstoast.open();
+        }
+      }
+    });
+
+  </script>
+</dom-module>

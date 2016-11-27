@@ -1,0 +1,693 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="../bower_components/iron-icons/image-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/paper-collapse-item/paper-collapse-item.html">
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/neon-animation/neon-animations.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/vaadin-charts/vaadin-column-chart.html">
+
+
+
+
+
+
+<dom-module id="tie-quick-evaluation">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: flex;
+        flex-direction: column;
+        background-color: #fff;
+      }
+
+      app-header {
+        background-color: var(--primary-blue);
+        color: #fff;
+      }
+
+      #spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .main-content {
+        margin: 16px 22px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .main-content > neon-animated-pages {
+        flex: 1;
+      }
+
+      .main-content h2 {
+        font-weight: 400;
+        margin-bottom: -0.3em;
+      }
+
+      .help-text {
+        font-size: 14px;
+        opacity: 0.6;
+      }
+
+      .select-questions {
+        padding-bottom: 16px;
+      }
+
+      .categories {
+        margin: 18px 0;
+      }
+
+      .categories paper-card {
+        display: block;
+      }
+
+      paper-collapse-item {
+        display: block;
+        --paper-collapse-item-icon: {
+          fill: var(--primary-blue);
+        };
+        --paper-item-focused-before: {
+          background: transparent;
+        };
+      }
+
+      paper-collapse-item:not(:first-child) {
+        border-top: 1px solid rgba(0,0,0,0.05);
+      }
+
+      paper-collapse-item .questions {
+        white-space: normal;
+        padding: 0 7px;
+      }
+
+      paper-collapse-item .questions paper-checkbox {
+        margin: 10px 0 27px;
+        display: block;
+        --paper-checkbox-checked-color: rgb(0, 170, 255);
+      }
+
+      .start-evaluation {
+        background-color: var(--primary-red);
+        color: #fff;
+        font-weight: 600;
+        text-transform: lowercase;
+        display: block;
+        text-align: center;
+        font-size: 18px;
+        margin: 0;
+      }
+
+      neon-animatable.questions {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      #questionpages {
+        flex: 1;
+        margin: 0 -16px;
+      }
+
+      #questionpages > neon-animatable {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .question-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 2em;
+        background-color: var(--primary-blue);
+        color: #fff;
+        border-radius: 8px;
+        height: 50%;
+        margin: 0 2em;
+        box-shadow: 0 8px 30px rgba(16, 48, 69, 0.15), 0 1px 1px rgba(22, 55, 71, 0.2), 0 3px 10px rgba(17, 68, 101, 0.06)
+      }
+
+      .question-card h3 {
+        font-weight: 300;
+        margin: 0;
+        opacity: 0.7;
+      }
+
+      .question-card h1 {
+        font-size: 28px;
+      }
+
+      .question-card iron-icon {
+        opacity: 0.7;
+        --iron-icon-height: 32px;
+        --iron-icon-width: 32px;
+      }
+
+      .answer-buttons {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 30px;
+      }
+
+      .answer-buttons paper-button {
+        width: 80px;
+        height: 80px;
+        box-sizing: border-box;
+        border-radius: 50%;
+        background-color: var(--primary-red);
+        color: #fff;
+        font-weight: 700;
+        min-width: 0;
+        margin: 0 10px;
+      }
+
+      .answer-buttons paper-button iron-icon {
+        --iron-icon-width: 40px;
+        --iron-icon-height: 40px;
+      }
+
+      .progress {
+        opacity: 0.5;
+        font-weight: 600;
+        text-align: center;
+        margin-top: 1em;
+      }
+
+      #chart {
+        display: block;
+        width: 340px;
+        height: 300px;
+      }
+
+      .chart-category-icons {
+        display: flex;
+        padding: 0 10px;
+      }
+
+      .chart-category-icons iron-icon {
+        fill: #00aaff;
+        flex: 1;
+        --iron-icon-width: 40px;
+        --iron-icon-height: 40px;
+      }
+
+      paper-button.notify {
+        display: block;
+        margin: 40px 0 10px;
+        text-align: center;
+        text-transform: none;
+        font-weight: 500;
+        font-size: 20px;
+        line-height: 1;
+        background: transparent;
+        color: var(--primary-red);
+        border: 2px solid;
+        border-radius: 4px;
+        display: flex;
+      }
+
+      paper-button.notify[disabled] {
+        color: #ccc;
+      }
+
+      paper-button.notify iron-icon {
+        opacity: 0;
+      }
+
+      paper-button.notify span {
+        flex: 1;
+        padding-right: 24px;
+      }
+
+      paper-button.notify + .help-text {
+        font-size: 12px;
+        line-height: 1.3;
+        display: block;
+        text-align: center;
+      }
+
+    </style>
+
+    <app-location id="location" route="{{route}}"></app-location>
+
+    <firebase-document path="/questions"
+                       data="{{questionsData}}"></firebase-document>
+
+    <firebase-document path="/categories"
+                       data="{{categoriesData}}"></firebase-document>
+
+    <firebase-document path="/evaluations"
+                      data="{{evaluationsData}}"></firebase-document>
+
+    <app-header fixed>
+      <app-toolbar>
+        <paper-icon-button icon="av:playlist-add-check" on-tap="_prev" id="prevbutton"></paper-icon-button>
+        <div main-title>[[student.name.first]] [[student.name.last]]</div>
+        <paper-icon-button icon="close" on-tap="_close" id="closebutton"></paper-icon-button>
+      </app-toolbar>
+    </app-header>
+
+    <paper-spinner id="spinner" active></paper-spinner>
+
+    <div class="main-content">
+      <neon-animated-pages id="mainpages" selected="[[state]]" entry-animation="slide-from-right-animation" exit-animation="slide-left-animation" on-iron-select="_onselect">
+
+        <neon-animatable class="select-questions">
+          <h2>Evaluation</h2>
+          <span class="help-text">Select the questions for the evaluation</span>
+          <div class="categories">
+            <paper-card>
+              <template is="dom-repeat" items="[[categories]]">
+                <paper-collapse-item header="[[item.text]]" on-toggle="_toggleCollapse" icon="[[_getCategoryIcon(item.id)]]">
+                  <div class="questions">
+                    <template is="dom-repeat" items="[[_getQuestionsForCategory(item.id)]]">
+                      <paper-checkbox checked="[[false]]" on-change="_selectQuestion" item="[[item]]">[[item.text]]</paper-checkbox>
+                    </template>
+  </div>
+  </paper-collapse-item>
+  </template>
+  </paper-card>
+  </div>
+  <paper-button raised class="start-evaluation" on-tap="_next">Start evaluation</paper-button>
+  </neon-animatable>
+
+  <neon-animatable class="questions">
+    <div class="progress">[[_getProgress(currentQuestion, selectedQuestions.length)]]</div>
+    <neon-animated-pages id="questionpages" selected="[[currentQuestion]]" entry-animation="slide-from-right-animation" exit-animation="slide-left-animation">
+      <template is="dom-repeat" items="[[selectedQuestions]]">
+              <neon-animatable>
+                <div class="question-card">
+                  <iron-icon icon="[[_getCategoryIcon(item.category)]]"></iron-icon>
+                  <h3 class="[[item.category]]">[[_getCategoryName(item.category)]]</h3>
+                  <h1>[[item.text]]</h1>
+                </div>
+              </neon-animatable>
+            </template>
+    </neon-animated-pages>
+    <div class="answer-buttons">
+      <paper-button on-tap="_nextQuestion" value="0"><iron-icon icon="clear"></iron-icon></paper-button>
+      <paper-button on-tap="_nextQuestion" value="1"><iron-icon icon="done"></iron-icon></paper-button>
+      <paper-button on-tap="_nextQuestion" value="2"><iron-icon icon="done-all"></iron-icon></paper-button>
+    </div>
+  </neon-animatable>
+
+  <neon-animatable class="finish-evaluation">
+    <h2>Summary</h2>
+    <span class="help-text">Here’s how you evaluated [[student.name.first]]</span>
+    <vaadin-column-chart id="chart">
+      <chart-title><text>null</text></chart-title>
+      <exporting enabled="false"></exporting>
+      <legend vertical-align="top" enabled="false"></legend>
+      <x-axis>
+        <chart-title></chart-title>
+        <categories>,,,</categories>
+      </x-axis>
+      <y-axis>
+        <visible>false</visible>
+        <labels><enabled>false</enabled></labels>
+      </y-axis>
+      <!-- <data-series name="Comparison">
+        <data>[[studentChartData]]</data>
+      </data-series> -->
+      <data-series name="You" data="[[answeredChartData]]">
+        <color>#f52c98</color>
+      </data-series>
+      <plot-options>
+        <column border-width="6" enable-mouse-tracking="false"></column>
+      </plot-options>
+    </vaadin-column-chart>
+    <div class="chart-category-icons">
+      <iron-icon icon="lightbulb-outline"></iron-icon>
+      <iron-icon icon="communication:chat"></iron-icon>
+      <iron-icon icon="image:palette"></iron-icon>
+      <iron-icon icon="social:people"></iron-icon>
+    </div>
+    <paper-button class="notify" on-tap="_notifyStudent" id="notifybutton"><iron-icon icon="check"></iron-icon> <span>notify [[student.name.first]]</span></paper-button>
+    <span class="help-text">[[student.name.first]] will receive a notification to answer the same evaluation questions you just answered, and be able to compare the results after doing the evaluation.</span>
+  </neon-animatable>
+
+  </neon-animated-pages>
+
+  <paper-toast id="finishedtoast" text="Evaluation complete"></paper-toast>
+  <paper-toast id="notifytoast" text="Notification sent!"></paper-toast>
+  </div>
+
+  </template>
+
+  <script>
+    Polymer({
+      is: 'tie-quick-evaluation',
+
+      properties: {
+        user: {
+          type: Object,
+          notify: true
+        },
+        student: {
+          type: Object,
+          observer: "_studentChanged",
+          notify: true
+        },
+        questionsData: {
+          type: Object,
+          observer: '_questionsDataChanged'
+        },
+        questions: {
+          type: Array
+        },
+        categoriesData: {
+          type: Object,
+          observer: '_categoriesDataChanged'
+        },
+        categories: {
+          type: Array,
+          notify: true
+        },
+        evaluationsData: {
+          type: Object,
+          observer: '_evaluationsDataChanged'
+        },
+        state: {
+          type: Number,
+          observer: "_stateChanged"
+        },
+        selectedQuestions: {
+          type: Array,
+          notify: true,
+          value: function() {
+            return [];
+          }
+        },
+        currentQuestion: {
+          type: Number,
+          value: function() {
+            return 0;
+          }
+        },
+        answers: {
+          type: Object
+        },
+        answeredChartData: {
+          type: Array,
+          notify: true
+        }
+      },
+
+      _openFirst: function(index) {
+        return index === 0;
+      },
+
+      ready: function() {
+        this.state = 0;
+        this.$.prevbutton.style.color = "#fff";
+      },
+
+      _studentChanged: function(data) {
+        // console.log("Student data changed", data);
+      },
+
+      _questionsDataChanged: function(data) {
+        // console.log("Question data changed", data);
+        this.$.spinner.active = false;
+        this.questions = {};
+        for (var q in data) {
+          var cat = data[q].category;
+          if (!this.questions[cat]) {
+            this.questions[cat] = [];
+          }
+          this.questions[cat].push({
+            id: q,
+            text: data[q].text,
+            category: cat
+          });
+        }
+      },
+
+      _categoriesDataChanged: function(data) {
+        // console.log("Category data changed", data);
+        this.categories = [];
+        for (var cat in data) {
+          this.push("categories", {
+            id: cat,
+            text: data[cat]
+          });
+        }
+        // console.log(this.categories);
+      },
+
+      _evaluationsDataChanged: function(data) {
+        // console.log("Evaluations data changed", data);
+      },
+
+      _getQuestionsForCategory: function(cat) {
+        // console.log(cat, this.questions);
+        var ret = [];
+        this.questions[cat].forEach(function(q) {
+          ret.push(q);
+        }.bind(this));
+        return ret;
+      },
+
+      _toggleCollapse: function(e) {
+        var items = Polymer.dom(this.root).querySelectorAll("paper-collapse-item");
+        items.forEach(function(item) {
+          if (item != e.target) {
+            item.opened = false;
+          }
+        });
+      },
+
+      _selectQuestion: function(e) {
+        if (e.path[0].checked) {
+          this.push("selectedQuestions", e.target.item);
+        } else {
+          this.selectedQuestions = this.selectedQuestions.filter(function(q) {
+            if (q.id != e.target.item.id)
+              return q;
+          });
+        }
+        // console.log(this.selectedQuestions);
+      },
+
+      _next: function() {
+        this.$.mainpages.entryAnimation = "slide-from-right-animation";
+        this.$.mainpages.exitAnimation = "slide-left-animation";
+
+        this.state += 1;
+      },
+
+      _prev: function() {
+        this.$.mainpages.entryAnimation = "slide-from-left-animation";
+        this.$.mainpages.exitAnimation = "slide-right-animation";
+        this.$.questionpages.entryAnimation = "slide-from-left-animation";
+        this.$.questionpages.exitAnimation = "slide-right-animation";
+
+        if (this.state === 1) {
+          if (this.currentQuestion > 0) {
+            this.currentQuestion -= 1;
+          } else {
+            // Go to question selection
+            this.state = 0;
+          }
+        } else if (this.state === 0) {
+          // TODO go to "inbox"
+        }
+      },
+
+      _nextQuestion: function(e) {
+        this.$.mainpages.entryAnimation = "slide-from-right-animation";
+        this.$.mainpages.exitAnimation = "slide-left-animation";
+        this.$.questionpages.entryAnimation = "slide-from-right-animation";
+        this.$.questionpages.exitAnimation = "slide-left-animation";
+
+        // Store answer
+        // Find the value
+        var val = 0;
+        e.path.forEach(function(el) {
+          if(el.nodeName == "PAPER-BUTTON") {
+            val = parseInt(el.getAttribute("value"));
+            return;
+          }
+        });
+        var questionid = this.selectedQuestions[this.currentQuestion].id;
+        var answer = {
+          question_id: questionid,
+          evaluator: this.user.mpassid,
+          timestamp: new Date().toISOString(),
+          value: val
+        };
+        this.answers[this.currentQuestion] = answer;
+
+        if (this.currentQuestion < this.selectedQuestions.length - 1) {
+          this.currentQuestion += 1;
+        } else {
+          this._finishEvaluation();
+        }
+      },
+
+      _onselect: function(e) {
+        // Huge ugly hack to stop a rendering problem
+        // (Chrome/webkit for some reason moves translates the contents to the
+        // upper left corner for no apparent reason, and toggling any transform
+        // properties in the inspector corrects the issue)
+        var el = e.target.querySelector(".iron-selected");
+        if (el) {
+          this.async(function() {
+            el.style.transform = "translatex(0px)";
+          });
+        }
+      },
+
+      _finishEvaluation: function() {
+        this.state = 2;
+        this.$.finishedtoast.open();
+
+        // Store answers to Firebase
+        this.answers.forEach(function(answer) {
+          var sid = this.student.mpassid;
+          var qid = answer.question_id;
+
+          // Create a new record if this student doesn’t have any evaluations
+          if (!this.evaluationsData[sid]) {
+            this.set("evaluationsData." + sid, {});
+          }
+          if (!this.evaluationsData[sid][qid]) {
+            this.set("evaluationsData." + sid + "." + qid, []);
+          }
+
+          // console.log(sid, qid, this.evaluationsData[sid][qid], answer);
+          this.push("evaluationsData." + sid + "." + qid, {
+            evaluator: answer.evaluator,
+            timestamp: answer.timestamp,
+            value: answer.value
+          });
+        }.bind(this));
+
+        // Update chart with answer data
+        var cumulativeAnswers = [];
+        // console.log(this.answers, this.selectedQuestions);
+        this.answers.forEach(function(a) {
+          this.selectedQuestions.forEach(function(q) {
+            if(a.question_id == q.id) {
+
+              var catnumber = q.category.substr(q.category.length - 1);
+              catnumber = parseInt(catnumber) - 1;
+              if(!cumulativeAnswers[catnumber]) {
+                cumulativeAnswers[catnumber] = parseInt(a.value);
+              }
+              cumulativeAnswers[catnumber] += parseInt(a.value);
+            }
+          }.bind(this));
+        }.bind(this));
+
+        this.answeredChartData = [
+          [0, cumulativeAnswers[0]],
+          [1, cumulativeAnswers[1]],
+          [2, cumulativeAnswers[2]],
+          [3, cumulativeAnswers[3]]
+        ];
+
+        // Workaround for vaadin-charts
+        var resizeEvent = new Event("resize");
+        window.dispatchEvent(resizeEvent);
+      },
+
+      _getCategoryName: function(catid) {
+        return this.categoriesData[catid];
+      },
+
+      _close: function() {
+        if (this.state == 2 ||  this.state == 0) {
+          // console.log("finished or not started, just close");
+          this.fire("close-evaluation", true);
+        } else if (this.state == 1) {
+          // console.log("in progress, save state and close");
+          this.fire("close-evaluation", false);
+        }
+
+        // Reset UI state
+        this.async(function() {
+          this.state = 0;
+
+          this.selectedQuestions = [];
+          // Reset all checkboxes also
+          var cbs = Polymer.dom(this.root).querySelectorAll("paper-checkbox");
+          cbs.forEach(function(cb) {
+            cb.checked = false;
+          });
+          // Close all collapse-items also
+          var cis = Polymer.dom(this.root).querySelectorAll("paper-collapse-item");
+          cis.forEach(function(ci) {
+            ci.opened = false;
+          });
+        }, 300);
+      },
+
+      _stateChanged: function() {
+        if (this.state === 0) {
+          this.$.prevbutton.disabled = true;
+          this.$.prevbutton.icon = "av:playlist-add-check";
+          this.answers = [];
+        } else if (this.state == 1) {
+          this.$.prevbutton.disabled = false;
+          this.$.prevbutton.icon = "arrow-back";
+        } else if (this.state == 2) {
+          this.$.prevbutton.disabled = true;
+          this.$.prevbutton.icon = "check-circle";
+        }
+      },
+
+      _getCategoryIcon: function(cat) {
+        if (cat == "categoryid_1") {
+          return "lightbulb-outline";
+        } else if (cat == "categoryid_2") {
+          return "communication:chat";
+        } else if (cat == "categoryid_3") {
+          return "image:palette";
+        } else if (cat == "categoryid_4") {
+          return "social:people";
+        }
+      },
+
+      _getProgress: function() {
+        return (this.currentQuestion + 1) + " / " + (this.selectedQuestions.length);
+      },
+
+      _notifyStudent: function() {
+        this.$.notifytoast.open();
+        // console.log(this.$.notifybutton);
+        this.$.notifybutton.disabled = true;
+        this.$.notifybutton.firstChild.style.opacity = "1";
+      }
+    });
+
+  </script>
+</dom-module>

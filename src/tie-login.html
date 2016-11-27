@@ -1,0 +1,91 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+
+
+<dom-module id="tie-login">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: flex;
+        flex-direction: column;
+        padding: 0% 10px;
+        background: var(--primary-blue);
+        color: #fff;
+        height: 100%;
+        box-sizing: border-box;
+        justify-content: space-around;
+      }
+
+      h1 {
+        color: inherit;
+        text-transform: lowercase;
+        text-align: center;
+        font-size: 3em;
+        margin: 0;
+      }
+
+      h1 span {
+        display: block;
+      }
+
+      h1 span:nth-child(2) {
+        letter-spacing: 0.04em;
+      }
+
+      h1 span:last-child {
+        letter-spacing: 0.06em;
+      }
+
+      paper-button {
+        background-color: var(--primary-red);
+        border-radius: 12px;
+        padding-left: 2em;
+        padding-right: 2em;
+        text-transform: lowercase;
+        font-size: 1.4em;
+        font-weight: 600;
+      }
+    </style>
+
+    <h1><span>Transparent</span> <span>Interactive</span> <span>Evaluation</span></h1>
+
+    <paper-button on-tap="_login">Sign In</paper-button>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'tie-login',
+
+      properties: {
+        user: {
+          type: Object,
+          notify: true
+        }
+      },
+
+      _login: function() {
+        document.getElementById("auth").signInWithPopup()
+          .then(function(response) {
+            // console.info("Success", response);
+          }.bind(this))
+          .catch(function(error) {
+            console.error("Sign in failed", error);
+            alert("Sign in failed");
+          });
+      }
+    });
+
+  </script>
+</dom-module>
