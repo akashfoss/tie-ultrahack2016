@@ -486,7 +486,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _selectQuestion: function(e) {
-        if (e.path[0].checked) {
+        var cb = e.target.nodeName == "PAPER-CHECKBOX" ? e.target : e.path[0];
+        if (cb.checked) {
           this.push("selectedQuestions", e.target.item);
         } else {
           this.selectedQuestions = this.selectedQuestions.filter(function(q) {
@@ -494,7 +495,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               return q;
           });
         }
-        // console.log(this.selectedQuestions);
       },
 
       _next: function() {
@@ -531,12 +531,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         // Store answer
         // Find the value
         var val = 0;
-        e.path.forEach(function(el) {
-          if(el.nodeName == "PAPER-BUTTON") {
-            val = parseInt(el.getAttribute("value"));
-            return;
+        if(e.path) {
+          e.path.forEach(function(el) {
+            if(el.nodeName == "PAPER-BUTTON") {
+              val = parseInt(el.getAttribute("value"));
+              return;
+            }
+          });
+        } else {
+          var el = e.target;
+          while(el.nodeName != "PAPER-BUTTON") {
+            el = el.parentNode;
           }
-        });
+          val = parseInt(el.getAttribute("value"));
+        }
         var questionid = this.selectedQuestions[this.currentQuestion].id;
         var answer = {
           question_id: questionid,
