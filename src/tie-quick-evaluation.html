@@ -656,6 +656,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           cis.forEach(function(ci) {
             ci.opened = false;
           });
+          // Reset notify button
+          this.$.notifybutton.disabled = false;
+          this.$.notifybutton.firstChild.style.opacity = "";
         }, 300);
       },
 

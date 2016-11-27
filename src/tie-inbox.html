@@ -176,7 +176,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                        data="{{userData}}">
     </firebase-document>
 
-    <app-header id="header" fixed>
+    <app-header id="appheader" fixed>
       <app-toolbar>
         <iron-icon icon="group-work"></iron-icon>
         <div main-title>tie</div>
@@ -282,7 +282,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       _quickEvaluate: function(e) {
         var studentId = e.target.getAttribute("user-id");
 
-        this.$.header.style.zIndex = "auto";
+        this.$.appheader.style.zIndex = "auto";
         this.$.main.classList.add("hide");
         this.$.evaluation.hidden = false;
 
@@ -311,7 +311,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.evaluation.classList.add("inactive");
         this.__activeStudentButton.classList.remove("activated");
         this.__activeStudentButton.style.transform = "";
-        this.$.header.style.zIndex = "";
+        this.$.appheader.style.zIndex = "";
         this.$.main.classList.remove("hide");
         this.student = null;
 
